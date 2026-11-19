@@ -1,0 +1,66 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+dist/
+build/
+*.egg-info/
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Secrets and credentials
+secrets/
+credentials
+credentials.json
+*.pem
+*.key
+*.p12
+*.pfx
+id_rsa
+id_ed25519
+.aws/
+.azure/
+.ssh/
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+*.tfvars.json
+!*.example.tfvars
+crash.log
+crash.*.log
+*.tfplan
+
+# Ansible
+*.retry
+.vault_pass
+
+# Kubernetes
+.kube/
+kubeconfig
+kubeconfig.yaml
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# Logs and temporary files
+*.log
+*.tmp
+tmp/
+
+# Operating systems
+.DS_Store
+Thumbs.db
