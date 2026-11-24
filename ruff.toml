@@ -1,0 +1,5 @@
+target-version = "py312"
+
+[lint.per-file-ignores]
+# Alembic's generated revisions retain their original import and annotation style.
+"migrations/versions/*.py" = ["I001", "UP007", "UP035"]

@@ -1,63 +1,68 @@
-# DevOps & SRE Platform
+# Security Control Hub
 
-A hands-on portfolio project focused on building, deploying,
-automating, securing, and operating a cloud-native application.
+Security Control Hub is a read-only FastAPI service for monitoring infrastructure security controls. It lists enabled controls, reports their latest recorded result, and serves check history. The local demo seeds four synthetic controls covering identity, network access, backups, and logging.
 
-## Project Status
+> [!WARNING]
+> The API currently has no authentication or authorization. Use it only for local development with synthetic data. Never expose it publicly or use it with real company evidence.
 
-Under active development.
+## Install the Python environment
 
-## Objectives
+Run these commands from the repository root in a Linux or WSL shell with Python 3.12 and its `venv` module installed.
 
-- Build a containerized application with FastAPI.
-- Implement PostgreSQL and Redis integration.
-- Automate testing, builds, and deployments.
-- Deploy workloads to Kubernetes.
-- Implement Infrastructure as Code and GitOps.
-- Configure monitoring, logging, and alerting.
-- Apply DevSecOps and SRE practices.
-- Practice incident investigation and recovery.
+```sh
+python3.12 -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements-dev.txt
+```
 
-## Development Environment
+The development requirements include the application, Alembic, the test client, pytest, and Ruff. For an application-only environment, install `requirements.txt`.
 
-- Windows 11
-- WSL2 / Ubuntu 24.04 LTS
-- Docker Desktop
-- Python 3.12
-- Git and GitHub
-- Visual Studio Code
+## Run tests and lint
 
-## Planned Technology Stack
+```sh
+python -m pytest -q
+ruff check .
+```
 
-| Category | Technologies |
-| --- | --- |
-| Application | Python, FastAPI |
-| Databases | PostgreSQL, Redis |
-| Containers | Docker, Docker Compose |
-| Container Registry | GHCR, Amazon ECR |
-| CI/CD | GitHub Actions, Jenkins |
-| Orchestration | Kubernetes, Minikube, Amazon EKS |
-| Package Management | Helm |
-| GitOps | Argo CD |
-| Infrastructure as Code | Terraform |
-| Configuration Management | Ansible |
-| Cloud | AWS |
-| Monitoring | Prometheus, Grafana |
-| Logging | Loki, Grafana Alloy |
-| Alerting | Alertmanager |
-| Security | Trivy |
-| Load Testing | k6 |
+The API tests use an in-memory SQLite database and can run immediately after installation. Docker, PostgreSQL credentials, and a local `.env` file are optional for these checks.
 
-## Documentation
+## Start the local API with PostgreSQL
 
-- [Project Roadmap](ROADMAP.md)
-- [Architecture](docs/architecture.md)
-- [Development Environment](docs/environment.md)
+1. Install Docker with a Compose version that supports `docker compose up --wait`. From the repository root, create a local configuration file if you do not already have one.
 
-## Project Approach
+   ```sh
+   test -e .env || cp .env.example .env
+   ```
 
-Each component will be implemented, tested, documented,
-and validated through practical troubleshooting scenarios.
+   For a new database, set `POSTGRES_DB=security_control_hub`, choose a local `POSTGRES_USER`, and replace the password placeholder with a private development password. For an existing database, keep its current credentials. The API and Alembic use `POSTGRES_HOST` (default `127.0.0.1`) and `POSTGRES_PORT` (default `5432`). Exported environment variables take precedence over the file.
 
-This repository is intended for educational and
-portfolio purposes.
+2. Start PostgreSQL 17, wait for its health check, and apply the outstanding migrations.
+
+   ```sh
+   docker compose up -d --wait db
+   python -m alembic upgrade head
+   ```
+
+3. Seed the local demo and start FastAPI from the activated virtual environment.
+
+   ```sh
+   python -m scripts.seed_controls
+   python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
+   ```
+
+   The seed inserts missing control definitions and preserves existing rows on a rerun. It accepts the database name `security_control_hub` on `127.0.0.1` or `localhost`. On a fresh database, the seeded controls show `not_checked` and have empty histories.
+
+4. Open the [interactive API documentation](http://127.0.0.1:8000/docs), or check the running service from a second terminal.
+
+   ```sh
+   curl http://127.0.0.1:8000/health
+   curl http://127.0.0.1:8000/api/v1/controls
+   ```
+
+Stop Uvicorn with Ctrl+C. Use `docker compose stop db` to stop PostgreSQL and retain its named volume.
+
+## Project documentation
+
+- [Architecture and endpoint reference](docs/architecture.md)
+- [Development roadmap](ROADMAP.md)
+- [Development environment](docs/environment.md)

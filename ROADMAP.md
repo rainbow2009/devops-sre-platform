@@ -1,119 +1,62 @@
-# Project Roadmap
+# Security Control Hub roadmap
 
-## Phase 0 - Environment Setup
+## Phase 1 - Local development baseline
 
-- [x] Configure WSL2 and Ubuntu 24.04
-- [x] Configure Docker Desktop
-- [x] Install development tools
-- [x] Configure Git
-- [x] Configure SSH authentication
-- [x] Install and launch VS Code
+- [x] Serve enabled controls, latest results, and check history through FastAPI.
+- [x] Model control definitions and check records in PostgreSQL 17 with SQLAlchemy and Alembic.
+- [x] Provide a local Compose database with a named volume and a health check.
+- [x] Seed four synthetic control definitions for local development.
+- [x] Declare Python 3.12 runtime and development dependencies.
+- [x] Run SQLite API tests without PostgreSQL settings and lint the repository with Ruff.
+- [x] Document local installation, migrations, seeding, and API startup.
 
-## Phase 1 - Repository Initialization
+## Phase 2 - Access to compliance evidence
 
-- [x] Initialize local Git repository
-- [x] Configure remote repository
-- [x] Create README
-- [x] Configure .gitignore
-- [x] Configure .gitattributes
-- [x] Define project roadmap
-- [x] Document planned architecture
-- [x] Document development environment
-- [x] Push initial commit to GitHub
+- [ ] Define who may read control summaries and detailed evidence.
+- [ ] Authenticate API callers and test authorization on evidence routes.
+- [ ] Separate the API database role from migration and data-writing roles.
 
-## Phase 2 - Application Development
+## Phase 3 - Check results and history
 
-- [x] Create FastAPI application
-- [ ] Implement REST API endpoints
-- [ ] Implement health and readiness endpoints
-- [ ] Configure structured logging
-- [ ] Implement application configuration
-- [ ] Create unit tests
-- [ ] Configure PostgreSQL
-- [ ] Implement database migrations
-- [ ] Integrate Redis
-- [ ] Create integration tests
+- [ ] Define evidence freshness, source validation, and handling of sensitive notes.
+- [ ] Exercise check ingestion with synthetic data and test status ordering.
+- [ ] Paginate the catalog and history, and optimize latest-status queries.
+- [ ] Define how reviewers can retrieve evidence for retired controls.
 
-## Phase 3 - Containerization
+## Phase 4 - Operations
 
-- [ ] Create Dockerfile
-- [ ] Implement multi-stage builds
-- [ ] Run application as non-root user
-- [ ] Configure Docker Compose
-- [ ] Configure persistent volumes
-- [ ] Configure container health checks
-- [ ] Troubleshoot container failures
+- [ ] Run CI against a disposable PostgreSQL 17 database to verify migrations, constraints, and seed reruns.
+- [ ] Add database readiness checks, structured logging, and service metrics.
+- [ ] Package the API for deployment and document backup and recovery procedures.
 
-## Phase 4 - CI/CD
+## Planned DevOps and SRE roadmap
 
-- [ ] Configure GitHub Actions
-- [ ] Automate linting and testing
-- [ ] Automate Docker image builds
-- [ ] Publish images to GHCR
-- [ ] Configure Jenkins
-- [ ] Implement Jenkins pipeline
-- [ ] Configure Trivy security scanning
+Phase 1 runs the API on the host and PostgreSQL in Docker Compose. All milestones below are planned.
 
-## Phase 5 - Kubernetes
+### Docker and GitHub Actions
 
-- [ ] Install Minikube
-- [ ] Configure Deployments and Services
-- [ ] Configure ConfigMaps and Secrets
-- [ ] Configure Ingress
-- [ ] Configure persistent storage
-- [ ] Configure resource requests and limits
-- [ ] Configure liveness and readiness probes
-- [ ] Configure Horizontal Pod Autoscaler
-- [ ] Practice rolling updates and rollbacks
-- [ ] Implement Helm charts
+- [ ] Build a multi-stage Docker image that runs the API as a non-root user. Add it to local Compose with a loopback port binding and a container health check.
+- [ ] Run Ruff, pytest, and PostgreSQL migration and seed checks on pull requests with GitHub Actions.
+- [ ] Build the image, scan it with Trivy, and publish passing images to GitHub Container Registry (GHCR) with a commit SHA tag. Reproduce the build and test stages in Jenkins.
 
-## Phase 6 - GitOps
+### Kubernetes, Helm, and Argo CD
 
-- [ ] Install Argo CD
-- [ ] Configure application synchronization
-- [ ] Implement environment-specific configurations
-- [ ] Practice drift detection and recovery
+- [ ] Deploy to a local Minikube cluster with a Deployment and Service. Configure Secrets, ConfigMaps, resource requests and limits, readiness and liveness probes, and persistent storage for PostgreSQL.
+- [ ] Package the manifests as a Helm chart with environment-specific values. Test local Ingress, horizontal autoscaling, a rolling upgrade, and rollback to the previous release.
+- [ ] Have Argo CD sync the chart from Git. Introduce drift in the local cluster, verify detection, and restore the declared configuration.
 
-## Phase 7 - Observability
+### Terraform and Ansible
 
-- [ ] Configure Prometheus
-- [ ] Implement application metrics
-- [ ] Configure Grafana dashboards
-- [ ] Configure Loki and Grafana Alloy
-- [ ] Configure Alertmanager
-- [ ] Create alerting rules
-- [ ] Document troubleshooting procedures
+- [ ] Use Terraform to provision an AWS development environment with VPC networking, IAM roles, ECR, EKS, and remote state. Set a budget alert and verify teardown of billable resources.
+- [ ] Use Ansible playbooks to configure development hosts and their tooling. Run each playbook twice and verify the second run reports no changes.
 
-## Phase 8 - AWS and Infrastructure as Code
+### Monitoring and logging
 
-- [ ] Configure AWS CLI
-- [ ] Configure AWS budget alerts
-- [ ] Install Terraform
-- [ ] Create VPC and networking resources
-- [ ] Configure IAM
-- [ ] Configure Amazon ECR
-- [ ] Deploy Amazon EKS
-- [ ] Configure remote Terraform state
-- [ ] Implement infrastructure cleanup procedures
-- [ ] Implement Ansible automation
+- [ ] Collect request counts, errors, and latency with Prometheus. Build Grafana dashboards and verify Alertmanager routing with a simulated failure.
+- [ ] Emit structured API logs with request IDs. Ship them to Loki with Grafana Alloy and use a request ID to trace a failed request without recording evidence payloads.
 
-## Phase 9 - SRE Practices
+### SLOs and incident simulations
 
-- [ ] Define SLIs and SLOs
-- [ ] Implement error budget calculations
-- [ ] Configure k6 load testing
-- [ ] Simulate application failures
-- [ ] Simulate database failures
-- [ ] Simulate Kubernetes failures
-- [ ] Implement recovery procedures
-- [ ] Write incident reports and RCAs
-
-## Phase 10 - Portfolio Documentation
-
-- [ ] Finalize architecture documentation
-- [ ] Document deployment procedures
-- [ ] Document operational runbooks
-- [ ] Add architecture diagrams
-- [ ] Add monitoring screenshots
-- [ ] Document lessons learned
-- [ ] Validate deployment from scratch
+- [ ] Define availability and latency service-level indicators for control reads. Set service-level objectives (SLOs), a measurement window, and error-budget alerts. Exercise them under k6 load.
+- [ ] In an isolated environment with synthetic data, simulate an API crash, a PostgreSQL outage, and a failed Kubernetes rollout. Record detection and recovery times and verify that control reads recover in each drill.
+- [ ] Rehearse restoring a PostgreSQL backup. Use the drill results to update recovery runbooks and write incident reports with root causes and follow-up actions.
