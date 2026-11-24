@@ -1,0 +1,19 @@
+name: My First CI Workflow
+
+on:
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  hello:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Show runner information
+        run: |
+          echo "Hello from GitHub Actions!"
+          echo "Operating system: $RUNNER_OS"
+          echo "Commit: $GITHUB_SHA"
+          echo "Working directory: $(pwd)"
+          python3 --version
