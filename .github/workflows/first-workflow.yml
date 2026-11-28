@@ -80,7 +80,27 @@ jobs:
 
       - name: Verify Docker image
         run: docker image inspect security-control-hub:ci
+      - name: Smoke test API container
+        run: |
+          docker run  -d \
+            --name sch-ci-smoke \
+            -p 127.0.0.1:8001:8000 \
+            security-control-hub:ci
 
+          trap 'docker rm -f sch-ci-smoke >/dev/null 2>&1 || true' EXIT
+
+          for attempt in $(seq 1 20); do
+            if curl -fsS http://127.0.0.1:8001/health; then
+              echo
+              echo "Smoke test passed!"
+              exit 0
+            fi
+
+            sleep 1
+          done
+
+          docker logs sch-ci-smoke
+          exit 1
   hello:
     needs: [lint, test, build]
     if: ${{ always() }}
