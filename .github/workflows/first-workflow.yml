@@ -62,9 +62,47 @@ jobs:
           echo "Ref: $GITHUB_REF"
           echo "SHA: $GITHUB_SHA"
           echo "Branch: $GITHUB_REF_NAME"
-
-  hello:
+  build:
     needs: [lint, test]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Show Docker version
+        run: docker version
+
+      - name: Build Docker image
+        run: docker build --progress=plain -t security-control-hub:ci .
+
+      - name: Verify Docker image
+        run: docker image inspect security-control-hub:ci
+      - name: Smoke test API container
+        run: |
+          docker run  -d \
+            --name sch-ci-smoke \
+            -p 127.0.0.1:8001:8000 \
+            security-control-hub:ci
+
+          trap 'docker rm -f sch-ci-smoke >/dev/null 2>&1 || true' EXIT
+
+          for attempt in $(seq 1 20); do
+            if curl -fsS http://127.0.0.1:8001/health; then
+              echo
+              echo "Smoke test passed!"
+              exit 0
+            fi
+
+            sleep 1
+          done
+
+          docker logs sch-ci-smoke
+          exit 1
+  hello:
+    needs: [lint, test, build]
     if: ${{ always() }}
     runs-on: ubuntu-latest
 
@@ -73,12 +111,15 @@ jobs:
         env:
           LINT_RESULT: ${{ needs.lint.result }}
           TEST_RESULT: ${{ needs.test.result }}
+          BUILD_RESULT: ${{ needs.build.result }}
         run: |
           echo "Lint result: $LINT_RESULT"
           echo "Test result: $TEST_RESULT"
+          echo "Build result: $BUILD_RESULT"
 
           test "$LINT_RESULT" = "success"
           test "$TEST_RESULT" = "success"
+          test "$BUILD_RESULT" = "success"
 
   system-info:
     needs: hello
