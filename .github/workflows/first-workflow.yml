@@ -16,13 +16,26 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: Setup Python 3.12
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - name: Show Python environment
+        run: |
+          echo "Python executable:"
+          which python
+
+          echo "Python version:"
+          python --version
+
+          echo "Pip version:"
+          python -m pip --version
+
       - name: Show repository files
         run: |
           echo "Current directory:"
           pwd
-
-          echo "Repository files:"
-          ls -la
 
           echo "Latest commit:"
           git log -1 --oneline
