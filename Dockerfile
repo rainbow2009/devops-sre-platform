@@ -1,5 +1,15 @@
 FROM python:3.12-slim-bookworm
 
+# Update Debian packages with known security fixes
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        libpam-modules \
+        libpam-modules-bin \
+        libpam-runtime \
+        libpam0g \
+        libzstd1 \
+    && rm -rf /var/lib/apt/lists/*
+
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
