@@ -111,6 +111,49 @@ jobs:
 
           docker logs sch-ci-smoke
           exit 1
+
+      - name: Save Docker image for Trivy
+        run: |
+          docker save \
+            -o "$RUNNER_TEMP/security-control-hub-ci.tar" \
+            security-control-hub:ci
+
+      - name: Generate full Trivy vulnerability report
+        run: |
+          docker run --rm \
+            -v trivy-cache:/root/.cache \
+            -v "$RUNNER_TEMP:/scan" \
+            aquasec/trivy:0.76.2 \
+            image \
+            --input /scan/security-control-hub-ci.tar \
+            --scanners vuln \
+            --severity HIGH,CRITICAL \
+            --format json \
+            --output /scan/trivy-full.json \
+            --exit-code 0
+
+      - name: Enforce Trivy security gate
+        run: |
+          docker run --rm \
+            -v trivy-cache:/root/.cache \
+            -v "$RUNNER_TEMP:/scan:ro" \
+            aquasec/trivy:0.76.2 \
+            image \
+            --input /scan/security-control-hub-ci.tar \
+            --scanners vuln \
+            --severity HIGH,CRITICAL \
+            --ignore-unfixed \
+            --exit-code 1
+
+      - name: Upload Trivy vulnerability report
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v6
+        with:
+          name: trivy-full-report
+          path: ${{ runner.temp }}/trivy-full.json
+          if-no-files-found: warn
+          retention-days: 7
+
   hello:
     needs: [lint, test, build]
     if: ${{ always() }}
