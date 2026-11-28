@@ -3,17 +3,31 @@ name: My First CI Workflow
 on:
   workflow_dispatch:
 
-permissions: {}
+permissions:
+  contents: read
 
 jobs:
   hello:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Show runner information
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Show repository files
         run: |
-          echo "Hello from GitHub Actions!"
-          echo "Operating system: $RUNNER_OS"
-          echo "Commit: $GITHUB_SHA"
-          echo "Working directory: $(pwd)"
-          python3 --version
+          echo "Current directory:"
+          pwd
+
+          echo "Repository files:"
+          ls -la
+
+          echo "Latest commit:"
+          git log -1 --oneline
+
+          echo "Check required files:"
+          test -f requirements.txt
+          test -f app/main.py
+          echo "Project files found!"
