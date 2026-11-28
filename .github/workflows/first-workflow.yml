@@ -75,3 +75,16 @@ jobs:
           test -f requirements.txt
           test -f app/main.py
           echo "Project files found!"
+
+  system-info:
+    needs: hello
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Display runner details
+        run: |
+          echo "Runner: $RUNNER_NAME"
+          echo "OS: $RUNNER_OS"
+          echo "Job: $GITHUB_JOB"
+          echo "Hostname: $(hostname)"
+          echo "Working directory: $(pwd)"
