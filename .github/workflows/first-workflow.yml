@@ -42,6 +42,10 @@ jobs:
           python -m pytest --version
           ruff --version
 
+      - name: Run Ruff lint
+        run: |
+          ruff check .
+
       - name: Show repository files
         run: |
           echo "Current directory:"
