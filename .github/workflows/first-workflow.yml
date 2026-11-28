@@ -13,7 +13,7 @@ permissions:
   contents: read
 
 jobs:
-  hello:
+  lint:
     runs-on: ubuntu-latest
 
     steps:
@@ -27,34 +27,34 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Show Python environment
-        run: |
-          echo "Python executable:"
-          which python
+      - name: Install dependencies
+        run: python -m pip install -r requirements-dev.txt
 
-          echo "Python version:"
-          python --version
+      - name: Run Ruff
+        run: ruff check .
 
-          echo "Pip version:"
-          python -m pip --version
+  test:
+    runs-on: ubuntu-latest
 
-      - name: Install Python dependencies
-        run: |
-          python -m pip install -r requirements-dev.txt
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Setup Python 3.12
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: python -m pip install -r requirements-dev.txt
 
       - name: Verify dependencies
-        run: |
-          python -m pip check
-          python -m pytest --version
-          ruff --version
+        run: python -m pip check
 
-      - name: Run Ruff lint
-        run: |
-          ruff check .
-
-      - name: Run API tests
-        run: |
-          python -m pytest -v
+      - name: Run pytest
+        run: python -m pytest -v
 
       - name: Show GitHub event context
         run: |
@@ -63,18 +63,22 @@ jobs:
           echo "SHA: $GITHUB_SHA"
           echo "Branch: $GITHUB_REF_NAME"
 
-      - name: Show repository files
+  hello:
+    needs: [lint, test]
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Verify required checks
+        env:
+          LINT_RESULT: ${{ needs.lint.result }}
+          TEST_RESULT: ${{ needs.test.result }}
         run: |
-          echo "Current directory:"
-          pwd
+          echo "Lint result: $LINT_RESULT"
+          echo "Test result: $TEST_RESULT"
 
-          echo "Latest commit:"
-          git log -1 --oneline
-
-          echo "Check required files:"
-          test -f requirements.txt
-          test -f app/main.py
-          echo "Project files found!"
+          test "$LINT_RESULT" = "success"
+          test "$TEST_RESULT" = "success"
 
   system-info:
     needs: hello
@@ -87,4 +91,3 @@ jobs:
           echo "OS: $RUNNER_OS"
           echo "Job: $GITHUB_JOB"
           echo "Hostname: $(hostname)"
-          echo "Working directory: $(pwd)"
