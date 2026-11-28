@@ -72,11 +72,21 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
       - name: Show Docker version
         run: docker version
 
       - name: Build Docker image
-        run: docker build --progress=plain -t security-control-hub:ci .
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          push: false
+          load: true
+          tags: security-control-hub:ci
+          cache-from: type=gha,scope=security-control-hub
+          cache-to: type=gha,scope=security-control-hub,mode=max
 
       - name: Verify Docker image
         run: docker image inspect security-control-hub:ci
